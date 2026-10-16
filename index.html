@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+Sinhala:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Field tool: single column, big touch targets, copper accent on cable-ink navy */
+:root{
+  --bg:#eef2f4; --card:#ffffff; --ink:#15232d; --muted:#5b6b75; --line:#d5dde2;
+  --navy:#1f3a4d; --copper:#b5651d; --copper-soft:#f6e7d8;
+  --ok:#1e7a46; --warn:#b07a00; --bad:#b3261e;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Noto Sans Sinhala","Iskoola Pota",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f171d; --card:#17232b; --ink:#e6edf1; --muted:#9aabb5; --line:#2a3a45;
+  --navy:#9fc3dc; --copper:#e08a44; --copper-soft:#3a2716;
+  --ok:#5cc98a; --warn:#e7b43c; --bad:#ff8a80; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);-webkit-text-size-adjust:100%}
+header{background:var(--navy);color:#fff;padding:14px 16px}
+@media (prefers-color-scheme:dark){header{background:#1a2d3a}}
+header .row{max-width:640px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+header h1{margin:0;font:700 22px/1.1 var(--display);letter-spacing:.02em;text-transform:uppercase}
+header small{display:block;font:500 13px var(--body);opacity:.8;text-transform:none;letter-spacing:0}
+main{max-width:640px;margin:0 auto;padding:16px;display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px}
+h2{margin:0;font:700 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04em;color:var(--navy)}
+h2 span{font:500 13px var(--body);color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px}
+label{display:grid;gap:4px;font-weight:500;font-size:14px}
+label em{font-style:normal;color:var(--muted);font-weight:400;font-size:12px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 12px;width:100%;min-height:46px}
+textarea{min-height:80px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--copper);outline-offset:1px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+button{font:600 16px var(--body);border:0;border-radius:8px;min-height:50px;padding:0 18px;cursor:pointer}
+.primary{background:var(--copper);color:#fff}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.ghost{background:transparent;color:var(--navy);border:1px solid var(--line)}
+header .ghost{color:#fff;border-color:rgba(255,255,255,.4);min-height:38px;font-size:13px}
+.err{color:var(--bad);font-weight:500;min-height:1em}
+.who{font-size:13px;color:var(--muted)}
+.who b{color:var(--ink)}
+
+/* GPS */
+.gps{display:grid;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:999px;background:var(--bg);width:max-content}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.pill.good .dot{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent);animation:pulse 1.6s infinite}
+.pill.mid .dot{background:var(--warn)} .pill.weak .dot,.pill.off .dot{background:var(--bad)}
+@keyframes pulse{50%{box-shadow:0 0 0 7px transparent}}
+@media (prefers-reduced-motion:reduce){.pill .dot{animation:none!important}}
+.coords{font:600 24px/1.1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.meta{font-size:13px;color:var(--muted)}
+.gps a{color:var(--copper);font-weight:600}
+
+/* Photos */
+.shots{display:grid;gap:10px}
+.shot{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;border:1px dashed var(--line);border-radius:10px;padding:10px}
+.shot.done{border-style:solid;border-color:var(--ok)}
+.thumb{width:96px;height:96px;border-radius:8px;background:var(--copper-soft);display:grid;place-items:center;overflow:hidden;font:700 30px var(--display);color:var(--copper)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.shot b{display:block}
+.shot .meta{margin:2px 0 8px}
+.shot input{display:none}
+.shot .pick{min-height:42px;font-size:14px;background:var(--navy);color:#fff}
+@media (prefers-color-scheme:dark){.shot .pick{background:#2f5470}}
+
+.done-box{text-align:center;gap:10px}
+.done-box .big{font:700 28px var(--display);color:var(--ok);letter-spacing:.03em}
+.done-box code{font:600 20px var(--display);letter-spacing:.06em;background:var(--bg);padding:6px 12px;border-radius:6px}
+.progress{font-size:14px;color:var(--muted);text-align:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="row">
+  <h1>Copper Recovery<small>SA Operations · කම්බි එකතු කිරීම · <span style="opacity:.7">v8 · web</span></small></h1>
+  <button class="ghost" id="logoutBtn" hidden>ඉවත් වන්න</button>
+</div></header>
+
+<main>
+  <!-- LOGIN -->
+  <section class="card" id="loginView">
+    <h2>ඇතුල් වන්න <span>Login</span></h2>
+    <label>OPMC<select id="opmc" onchange="crFillGroups(this)"><option value="">පූරණය වෙමින්…</option></select></label>
+    <label>වැඩ කණ්ඩායම <em>Work Group</em><select id="group" disabled><option value="">මුලින් OPMC තෝරන්න</option></select></label>
+    <label>නම <em>Officer name</em><input id="officer" autocomplete="name"></label>
+    <div class="two">
+      <label>සේවක අංකය <em>Emp No</em><input id="empNo"></label>
+      <label>දුරකථන <em>Phone</em><input id="phone" type="tel" inputmode="tel"></label>
+    </div>
+    <label id="pinWrap" hidden>කණ්ඩායම් PIN <em>Work group PIN</em><input id="pin" type="password" inputmode="numeric"></label>
+    <div class="err" id="loginErr"></div>
+    <button class="primary" id="loginBtn">ඇතුල් වන්න</button>
+  </section>
+
+  <!-- WORK FORM -->
+  <div id="workView" hidden style="display:grid;gap:14px">
+    <div class="who" id="who"></div>
+
+    <section class="card gps">
+      <h2>ස්ථානය <span>Live GPS</span></h2>
+      <div class="pill off" id="gpsPill"><span class="dot"></span><span id="gpsState">GPS සොයමින්…</span></div>
+      <div class="coords" id="gpsCoords">— , —</div>
+      <div class="meta" id="gpsMeta">ඔබ කම්බි කපන ස්ථානයේ සිටගෙන සිටින්න. Location ON කරන්න.</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="ghost" type="button" id="gpsRetry" style="min-height:40px;font-size:14px">↻ GPS නැවත</button>
+        <a id="gpsMap" href="#" target="_blank" rel="noopener" hidden>Google Maps හි බලන්න →</a>
+      </div>
+      <details id="manualBox">
+        <summary class="meta">GPS වැඩ නොකරයි නම් – අතින් ඇතුළත් කරන්න</summary>
+        <div class="two" style="margin-top:8px">
+          <label>Latitude<input id="mLat" inputmode="decimal" placeholder="6.9271"></label>
+          <label>Longitude<input id="mLng" inputmode="decimal" placeholder="79.8612"></label>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>ඡායාරූප <span>3 photos required</span></h2>
+      <div class="shots">
+        <div class="shot" data-k="before">
+          <div class="thumb">1</div>
+          <div><b>කම්බි කැපීමට පෙර</b><div class="meta">Before cutting – the site as found</div>
+            <input type="file" accept="image/*" capture="environment"><button class="pick" type="button">📷 ඡායාරූපය ගන්න</button></div>
+        </div>
+        <div class="shot" data-k="after">
+          <div class="thumb">2</div>
+          <div><b>කම්බි කැපූ පසු</b><div class="meta">After cutting – same spot</div>
+            <input type="file" accept="image/*" capture="environment"><button class="pick" type="button">📷 ඡායාරූපය ගන්න</button></div>
+        </div>
+        <div class="shot" data-k="collected">
+          <div class="thumb">3</div>
+          <div><b>එකතු කළ කම්බි</b><div class="meta">Recovered wires collected</div>
+            <input type="file" accept="image/*" capture="environment"><button class="pick" type="button">📷 ඡායාරූපය ගන්න</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>විස්තර <span>Details</span></h2>
+      <label>දෝෂ / Ref අංකය <em>Fault ticket / Ref No</em><input id="faultRef"></label>
+      <div class="two">
+        <label>කේබල් වර්ගය <em>Cable type</em>
+          <select id="cableType"><option value="">තෝරන්න</option><option>Underground (UG)</option><option>Overhead (OH)</option><option>Drop wire</option><option>Jumper / Cabinet</option><option>Other</option></select></label>
+        <label>යුගල ගණන <em>Pairs</em><input id="pairs" inputmode="numeric" placeholder="e.g. 50"></label>
+      </div>
+      <div class="two">
+        <label>දිග (මීටර්) <em>Length m</em><input id="length" inputmode="decimal"></label>
+        <label>බර (kg) <em>Approx. weight</em><input id="weight" inputmode="decimal"></label>
+      </div>
+      <label>සටහන් <em>Notes</em><textarea id="notes"></textarea></label>
+      <div class="err" id="subErr"></div>
+      <button class="primary" id="submitBtn">යොමු කරන්න · Submit</button>
+      <div class="progress" id="progress" hidden></div>
+    </section>
+  </div>
+
+  <!-- DONE -->
+  <section class="card done-box" id="doneView" hidden>
+    <div class="big">✓ සාර්ථකව යොමු කළා</div>
+    <div>Reference No</div>
+    <div><code id="doneId"></code></div>
+    <div class="meta" id="doneTime"></div>
+    <button class="primary" id="newBtn">අලුත් වාර්තාවක් · New record</button>
+  </section>
+</main>
+
+<div id="jsErr" hidden style="position:fixed;left:0;right:0;bottom:0;background:#b3261e;color:#fff;padding:10px 16px;font:13px system-ui;z-index:99"></div>
+<script>
+(function () {
+    function show(msg) { var b = document.getElementById('jsErr'); if (!b)
+        return; b.hidden = false; b.textContent = 'App error: ' + msg + ' \u2013 \u0db8\u0dd9\u0db8 screenshot \u0d91\u0d9a supervisor \u0da7 \u0dba\u0dc0\u0db1\u0dca\u0db1.'; }
+    window.addEventListener('error', function (e) { show((e.message || e) + (e.lineno ? ' (line ' + e.lineno + ')' : '')); });
+    window.addEventListener('unhandledrejection', function (e) { var r = e.reason; show((r && r.message) || String(r)); });
+})();
+function crFillGroups(sel) {
+    try {
+        var o = sel.options[sel.selectedIndex], g = document.getElementById('group');
+        var list = ((o && o.getAttribute('data-g')) || '').split('|').filter(function (x) { return x; });
+        g.innerHTML = '<option value="">' + (list.length ? '\u0d9a\u0dab\u0dca\u0da9\u0dcf\u0dba\u0db8 \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1' : '\u0db8\u0dd4\u0dbd\u0dd2\u0db1\u0dca OPMC \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1') + '</option>';
+        for (var i = 0; i < list.length; i++) {
+            var op = document.createElement('option');
+            op.textContent = list[i];
+            g.appendChild(op);
+        }
+        g.disabled = !list.length;
+    }
+    catch (e) { }
+}
+</script>
+<script>
+/* ====== SETTING: paste your Apps Script Web app URL (ends with /exec) between the quotes ====== */
+window.__BOOT = { url: "PASTE_YOUR_WEB_APP_URL_HERE" };
+if (window.__BOOT.url.indexOf("/exec") < 0) document.addEventListener("DOMContentLoaded", function(){ var e = document.getElementById("loginErr"); if (e) e.textContent = "Setup: index.html eke Web app URL eka dala naha."; });
+</script>
+<script>
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+(function () {
+    'use strict';
+    var _this = this;
+    var BOOT = window.__BOOT || {};
+    var $ = function (s) { return document.querySelector(s); };
+    var newId = function () { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); };
+    var CLIENT_ID = newId();
+    function call(fn, args, ms) {
+        return new Promise(function (resolve, reject) {
+            var done = false, fetched = false, t;
+            var finish = function (ok, v) { if (done)
+                return; done = true; clearTimeout(t); ok ? resolve(v) : reject(v); };
+            var viaFetch = function () {
+                if (fetched || done)
+                    return;
+                fetched = true;
+                clearTimeout(t);
+                if (!BOOT.url)
+                    return finish(false, new Error('Server \u0d91\u0d9a\u0da7 \u0dc3\u0db8\u0dca\u0db6\u0db1\u0dca\u0db0 \u0dc0\u0dd2\u0dba \u0db1\u0ddc\u0dc4\u0dd0\u0d9a.'));
+                fetch(BOOT.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }) })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) { return j.ok ? finish(true, j.result) : finish(false, new Error(j.error)); })
+                    .catch(function () { return finish(false, new Error('Server \u0d91\u0d9a\u0da7 \u0dc3\u0db8\u0dca\u0db6\u0db1\u0dca\u0db0 \u0dc0\u0dd2\u0dba \u0db1\u0ddc\u0dc4\u0dd0\u0d9a. Internet / signal \u0db4\u0dbb\u0dd3\u0d9a\u0dca\u0dc2\u0dcf \u0d9a\u0dbb \u0db1\u0dd0\u0dc0\u0dad \u0d8b\u0dad\u0dca\u0dc3\u0dcf\u0dc4 \u0d9a\u0dbb\u0db1\u0dca\u0db1.')); });
+            };
+            t = setTimeout(viaFetch, ms || 10000);
+            try {
+                google.script.run
+                    .withSuccessHandler(function (v) { return finish(true, v); })
+                    .withFailureHandler(function (e) { var m = (e && e.message) || ''; if (!m || /authori|permission|access|network/i.test(m))
+                    viaFetch();
+                else
+                    finish(false, e); })[fn].apply(null, args);
+            }
+            catch (e) {
+                viaFetch();
+            }
+        });
+    }
+    var store = {
+        get: function (k) { try {
+            return JSON.parse(localStorage.getItem(k));
+        }
+        catch (e) {
+            return null;
+        } },
+        set: function (k, v) { try {
+            localStorage.setItem(k, JSON.stringify(v));
+        }
+        catch (e) { } },
+        del: function (k) { try {
+            localStorage.removeItem(k);
+        }
+        catch (e) { } }
+    };
+    var OPTIONS = [], SESSION = null, GPS = null, watchId = null;
+    var PHOTOS = {}, PHOTO_GPS = {};
+    var LABELS = { before: 'BEFORE CUT', after: 'AFTER CUT', collected: 'COLLECTED WIRES' };
+    function fillOptions(opts) {
+        OPTIONS = opts || [];
+        var sel = $('#opmc');
+        if (sel.options.length !== OPTIONS.length + 1)
+            sel.innerHTML = '<option value="">OPMC \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1</option>' + OPTIONS.map(function (o) { return "<option>".concat(esc(o.opmc), "</option>"); }).join('');
+        if (!OPTIONS.length)
+            $('#loginErr').textContent = 'OPMC \u0dbd\u0dd0\u0dba\u0dd2\u0dc3\u0dca\u0dad\u0dd4\u0dc0 \u0dc4\u0dd2\u0dc3\u0dca\u0dba\u0dd2. Admin: Apps Script \u0d91\u0d9a\u0dda setup / loadOpmcList run \u0d9a\u0dbb\u0db1\u0dca\u0db1.';
+        var saved = store.get('cr_session');
+        if (!SESSION && saved && OPTIONS.some(function (o) { return o.opmc === saved.opmc; })) {
+            SESSION = saved;
+            enterWork();
+        }
+    }
+    if (BOOT.err)
+        $('#loginErr').textContent = 'Setup \u0daf\u0ddd\u0dc2\u0dba: ' + BOOT.err;
+    else if (BOOT.opts)
+        fillOptions(BOOT.opts);
+    else {
+        var cached_1 = store.get('cr_opts');
+        if (cached_1 && cached_1.length)
+            fillOptions(cached_1);
+        call('getOptions', [], 20000).then(function (o) { store.set('cr_opts', o); fillOptions(o); })
+            .catch(function (e) { if (!cached_1)
+            $('#loginErr').textContent = e.message; });
+    }
+    $('#opmc').addEventListener('change', function () {
+        var o = OPTIONS.find(function (x) { return x.opmc === $('#opmc').value; });
+        var g = $('#group');
+        g.disabled = !o;
+        g.innerHTML = o ? '<option value="">\u0d9a\u0dab\u0dca\u0da9\u0dcf\u0dba\u0db8 \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1</option>' + o.groups.map(function (x) { return "<option>".concat(esc(x.name), "</option>"); }).join('') : '<option value="">\u0db8\u0dd4\u0dbd\u0dd2\u0db1\u0dca OPMC \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1</option>';
+        $('#pinWrap').hidden = true;
+    });
+    $('#group').addEventListener('change', function () {
+        var o = OPTIONS.find(function (x) { return x.opmc === $('#opmc').value; });
+        var g = o && o.groups.find(function (x) { return x.name === $('#group').value; });
+        $('#pinWrap').hidden = !(g && g.needsPin);
+    });
+    $('#loginBtn').addEventListener('click', function () {
+        var s = { opmc: $('#opmc').value, group: $('#group').value, officer: $('#officer').value.trim(),
+            empNo: $('#empNo').value.trim(), phone: $('#phone').value.trim(), pin: $('#pin').value };
+        if (!s.opmc || !s.group)
+            return $('#loginErr').textContent = 'OPMC \u0dc3\u0dc4 \u0dc0\u0dd0\u0da9 \u0d9a\u0dab\u0dca\u0da9\u0dcf\u0dba\u0db8 \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1.';
+        if (!s.officer)
+            return $('#loginErr').textContent = '\u0d94\u0db6\u0dda \u0db1\u0db8 \u0d87\u0dad\u0dd4\u0dc5\u0dad\u0dca \u0d9a\u0dbb\u0db1\u0dca\u0db1.';
+        $('#loginBtn').disabled = true;
+        $('#loginErr').textContent = '';
+        call('login', [s.opmc, s.group, s.pin]).then(function () {
+            $('#loginBtn').disabled = false;
+            SESSION = s;
+            store.set('cr_session', s);
+            enterWork();
+        }).catch(function (e) { $('#loginBtn').disabled = false; $('#loginErr').textContent = e.message; });
+    });
+    $('#logoutBtn').addEventListener('click', function () {
+        store.del('cr_session');
+        SESSION = null;
+        stopGps();
+        $('#workView').hidden = true;
+        $('#doneView').hidden = true;
+        $('#loginView').hidden = false;
+        $('#logoutBtn').hidden = true;
+    });
+    function enterWork() {
+        $('#loginView').hidden = true;
+        $('#doneView').hidden = true;
+        $('#workView').hidden = false;
+        $('#logoutBtn').hidden = false;
+        $('#who').innerHTML = "<b>".concat(esc(SESSION.officer), "</b> \u00B7 ").concat(esc(SESSION.opmc), " \u00B7 ").concat(esc(SESSION.group));
+        startGps();
+    }
+    var hiWatch = null, loWatch = null, retryT = null;
+    var FRESH_MS = 120000;
+    function takeFix(p) {
+        var f = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, time: p.timestamp || Date.now(), source: 'device' };
+        if (Date.now() - f.time > FRESH_MS)
+            return;
+        var old = GPS && GPS.source === 'device' && !GPS.saved ? GPS : null;
+        if (!old || f.acc <= old.acc || (f.time - old.time) > 20000) {
+            GPS = f;
+            renderGps();
+            store.set('cr_lastfix', f);
+        }
+    }
+    function onGpsErr(err) {
+        if (err.code === 1) {
+            stopGps();
+            var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            return gpsFail(ios
+                ? 'Location \u0d85\u0dc0\u0dc3\u0dbb\u0dba \u0db1\u0dd0\u0dad. iPhone: Settings \u2192 Privacy & Security \u2192 Location Services \u2192 ON \u2192 Safari Websites \u2192 "While Using the App" + Precise ON. \u0d89\u0db1\u0dca\u0db4\u0dc3\u0dd4 Safari \u0d91\u0d9a\u0dda aA \u2192 Website Settings \u2192 Location \u2192 Allow.'
+                : 'Location \u0d85\u0dc0\u0dc3\u0dbb\u0dba \u0db1\u0dd0\u0dad. Chrome \u22ee \u2192 Settings \u2192 Site settings \u2192 Location \u2192 Allow \u0d9a\u0dbb\u0db1\u0dca\u0db1. Phone \u0d91\u0d9a\u0dda Location ON \u0daf \u0db6\u0dbd\u0db1\u0dca\u0db1.');
+        }
+        if (!GPS || GPS.saved)
+            gpsFail('GPS \u0dad\u0dc0\u0db8 \u0dbd\u0dd0\u0db6\u0dd4\u0dab\u0dda \u0db1\u0dd0\u0dad. Phone \u0d91\u0d9a\u0dda Location ON \u0daf \u0db6\u0dbd\u0db1\u0dca\u0db1, \u0d91\u0dc5\u0dd2\u0db8\u0dc4\u0db1\u0da7 \u0dba\u0db1\u0dca\u0db1.');
+        clearTimeout(retryT);
+        retryT = setTimeout(startGps, 4000);
+    }
+    function startGps() {
+        try {
+            if (!navigator.geolocation)
+                return gpsFail('\u0db8\u0dd9\u0db8 \u0daf\u0dd4\u0dbb\u0d9a\u0dae\u0db1\u0dba\u0dda GPS \u0dc3\u0dc4\u0dcf\u0dba \u0db1\u0dd0\u0dad.');
+            stopGps();
+            if (!GPS) {
+                var last = store.get('cr_lastfix');
+                if (last && Date.now() - last.time < 6 * 3600e3) {
+                    GPS = Object.assign({}, last, { saved: true });
+                    renderGps();
+                }
+                else {
+                    $('#gpsPill').className = 'pill off';
+                    $('#gpsState').textContent = 'GPS \u0dc3\u0ddc\u0dba\u0db8\u0dd2\u0db1\u0dca\u2026';
+                }
+            }
+            loWatch = navigator.geolocation.watchPosition(takeFix, function () { }, { enableHighAccuracy: false, maximumAge: 30000, timeout: 10000 });
+            hiWatch = navigator.geolocation.watchPosition(takeFix, onGpsErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 45000 });
+        }
+        catch (e) {
+            gpsFail('GPS \u0daf\u0ddd\u0dc2\u0dba: ' + e.message);
+        }
+    }
+    function stopGps() {
+        try {
+            if (hiWatch != null)
+                navigator.geolocation.clearWatch(hiWatch);
+            if (loWatch != null)
+                navigator.geolocation.clearWatch(loWatch);
+        }
+        catch (e) { }
+        hiWatch = loWatch = null;
+        clearTimeout(retryT);
+    }
+    function renderGps() {
+        var a = Math.round(GPS.acc), pill = $('#gpsPill');
+        if (GPS.saved) {
+            pill.className = 'pill mid';
+            $('#gpsState').textContent = '\u0d85\u0dbd\u0dd4\u0dad\u0dca \u0d9a\u0dbb\u0db8\u0dd2\u0db1\u0dca\u2026 (\u0db4\u0dd9\u0dbb \u0dc3\u0dca\u0dae\u0dcf\u0db1\u0dba)';
+        }
+        else {
+            pill.className = 'pill ' + (a <= 20 ? 'good' : a <= 50 ? 'mid' : 'weak');
+            $('#gpsState').textContent = a <= 20 ? 'Live \u00b7 \u0dc4\u0ddc\u0db3\u0dba\u0dd2' : a <= 50 ? 'Live \u00b7 \u0dc3\u0dcf\u0db8\u0dcf\u0db1\u0dca\u200d\u0dba\u0dba\u0dd2' : a <= 150 ? 'Live \u00b7 \u0daf\u0dc5 \u0dc3\u0dca\u0dae\u0dcf\u0db1\u0dba (\u0db1\u0dd2\u0dc0\u0dd0\u0dbb\u0daf\u0dd2 \u0dc0\u0dd9\u0db8\u0dd2\u0db1\u0dca)' : 'Live \u00b7 \u0daf\u0dd4\u0dbb\u0dca\u0dc0\u0dbd\u0dba\u0dd2';
+        }
+        $('#gpsCoords').textContent = GPS.lat.toFixed(6) + ', ' + GPS.lng.toFixed(6);
+        $('#gpsMap').hidden = false;
+        $('#gpsMap').href = "https://www.google.com/maps?q=".concat(GPS.lat, ",").concat(GPS.lng);
+        tickGps();
+    }
+    function tickGps() {
+        if (!GPS || GPS.source !== 'device')
+            return;
+        var sec = Math.max(0, Math.round((Date.now() - GPS.time) / 1000));
+        var age = sec < 90 ? "\u0DAD\u0DAD\u0DCA\u0DB4\u0DBB ".concat(sec, " \u0D9A\u0DA7 \u0DB4\u0DD9\u0DBB") : "\u0DB8\u0DD2\u0DB1\u0DD2\u0DAD\u0DCA\u0DAD\u0DD4 ".concat(Math.round(sec / 60), " \u0D9A\u0DA7 \u0DB4\u0DD9\u0DBB");
+        $('#gpsMeta').textContent = "\u0DB1\u0DD2\u0DBB\u0DC0\u0DAF\u0DCA\u200D\u0DBA\u0DAD\u0DCF\u0DC0\u0DBA \u00B1".concat(Math.round(GPS.acc), " m \u00B7 \u0DBA\u0DCF\u0DC0\u0DAD\u0DCA\u0D9A\u0DCF\u0DBD\u0DD3\u0DB1 \u0D9A\u0DC5\u0DDA ").concat(age);
+    }
+    setInterval(tickGps, 1000);
+    $('#gpsRetry').addEventListener('click', function () { GPS = null; $('#gpsCoords').textContent = '\u2014 , \u2014'; startGps(); });
+    function gpsFail(msg) {
+        if (!GPS) {
+            $('#gpsPill').className = 'pill off';
+            $('#gpsState').textContent = 'GPS \u0db1\u0dd0\u0dad';
+        }
+        $('#gpsMeta').textContent = msg;
+        $('#manualBox').open = true;
+    }
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && SESSION)
+        startGps(); });
+    setTimeout(startGps, 300);
+    function currentGps() {
+        if (GPS && !GPS.saved && Date.now() - GPS.time < FRESH_MS)
+            return GPS;
+        var lat = parseFloat($('#mLat').value), lng = parseFloat($('#mLng').value);
+        if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180)
+            return { lat: lat, lng: lng, acc: 0, time: Date.now(), source: 'manual' };
+        return null;
+    }
+    document.querySelectorAll('.shot').forEach(function (el) {
+        var input = el.querySelector('input'), btn = el.querySelector('.pick'), k = el.dataset.k;
+        btn.addEventListener('click', function () { return input.click(); });
+        input.addEventListener('change', function () { return __awaiter(_this, void 0, void 0, function () {
+            var file, g, dataUrl, e_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        file = input.files[0];
+                        if (!file)
+                            return [2];
+                        btn.disabled = true;
+                        btn.textContent = '\u0dc3\u0d9a\u0dc3\u0db8\u0dd2\u0db1\u0dca\u2026';
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        g = currentGps();
+                        return [4, processPhoto(file, k, g)];
+                    case 2:
+                        dataUrl = _a.sent();
+                        PHOTOS[k] = dataUrl;
+                        PHOTO_GPS[k] = g ? { lat: g.lat, lng: g.lng, acc: g.acc } : null;
+                        el.querySelector('.thumb').innerHTML = "<img alt=\"\" src=\"".concat(dataUrl, "\">");
+                        el.classList.add('done');
+                        btn.textContent = '\u21bb \u0db1\u0dd0\u0dc0\u0dad \u0d9c\u0db1\u0dca\u0db1';
+                        return [3, 4];
+                    case 3:
+                        e_1 = _a.sent();
+                        btn.textContent = '\ud83d\udcf7 \u0da1\u0dcf\u0dba\u0dcf\u0dbb\u0dd6\u0db4\u0dba \u0d9c\u0db1\u0dca\u0db1';
+                        alertErr('\u0da1\u0dcf\u0dba\u0dcf\u0dbb\u0dd6\u0db4\u0dba \u0dc3\u0dd0\u0d9a\u0dc3\u0dd2\u0dba \u0db1\u0ddc\u0dc4\u0dd0\u0d9a: ' + e_1.message);
+                        return [3, 4];
+                    case 4:
+                        btn.disabled = false;
+                        input.value = '';
+                        return [2];
+                }
+            });
+        }); });
+    });
+    function processPhoto(file, k, g) {
+        return new Promise(function (res, rej) {
+            var img = new Image(), url = URL.createObjectURL(file);
+            img.onload = function () {
+                var MAX = 1600, s = Math.min(1, MAX / Math.max(img.width, img.height));
+                var w = Math.round(img.width * s), h = Math.round(img.height * s);
+                var c = document.createElement('canvas');
+                c.width = w;
+                c.height = h;
+                var x = c.getContext('2d');
+                x.drawImage(img, 0, 0, w, h);
+                var fs = Math.max(16, Math.round(w / 42)), pad = Math.round(fs * .6), band = fs * 3 + pad * 2;
+                x.fillStyle = 'rgba(0,0,0,.62)';
+                x.fillRect(0, h - band, w, band);
+                x.fillStyle = '#ffb36b';
+                x.font = "bold ".concat(fs, "px Arial, sans-serif");
+                x.fillText(LABELS[k] + '  \u00b7  ' + SESSION.opmc + ' / ' + SESSION.group, pad, h - band + pad + fs * .9);
+                x.fillStyle = '#ffffff';
+                x.font = "".concat(fs, "px Arial, sans-serif");
+                x.fillText(new Date().toLocaleString('en-GB', { timeZone: 'Asia/Colombo' }) + '  \u00b7  ' + SESSION.officer, pad, h - band + pad + fs * 1.95);
+                x.fillText(g ? "GPS ".concat(g.lat.toFixed(6), ", ").concat(g.lng.toFixed(6), "  \u00B1").concat(Math.round(g.acc), "m") : 'GPS: not available', pad, h - band + pad + fs * 3);
+                URL.revokeObjectURL(url);
+                res(c.toDataURL('image/jpeg', 0.72));
+            };
+            img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('unsupported image')); };
+            img.src = url;
+        });
+    }
+    $('#submitBtn').addEventListener('click', function () {
+        var g = currentGps();
+        if (!g)
+            return alertErr('\u0d85\u0dbd\u0dd4\u0dad\u0dca GPS \u0dc3\u0dca\u0dae\u0dcf\u0db1\u0dba\u0d9a\u0dca \u0db1\u0dd0\u0dad. GPS pill \u0d91\u0d9a \u0d9a\u0ddc\u0dc5 / \u0d9a\u0dc4 \u0dc0\u0db1 \u0dad\u0dd4\u0dbb\u0dd4 \u0dad\u0dad\u0dca\u0db4\u0dbb \u0d9a\u0dd2\u0dc4\u0dd2\u0db4\u0dba\u0d9a\u0dca \u0dbb\u0dd0\u0db3\u0dd3 \u0dc3\u0dd2\u0da7\u0dd2\u0db1\u0dca\u0db1, \u0db1\u0dd0\u0dad\u0dc4\u0ddc\u0dad\u0dca \u0d85\u0dad\u0dd2\u0db1\u0dca \u0d87\u0dad\u0dd4\u0dc5\u0dad\u0dca \u0d9a\u0dbb\u0db1\u0dca\u0db1.');
+        var miss = ['before', 'after', 'collected'].filter(function (k) { return !PHOTOS[k]; });
+        if (miss.length)
+            return alertErr('\u0da1\u0dcf\u0dba\u0dcf\u0dbb\u0dd6\u0db4 3\u0db8 \u0d85\u0dc0\u0dc1\u0dca\u200d\u0dba\u0dba\u0dd2. (' + miss.map(function (k) { return LABELS[k]; }).join(', ') + ' \u0db1\u0dd0\u0dad)');
+        var payload = __assign(__assign({}, SESSION), { clientId: CLIENT_ID, gps: g, photos: PHOTOS, photoGps: PHOTO_GPS, faultRef: $('#faultRef').value.trim(), cableType: $('#cableType').value, pairs: $('#pairs').value.trim(), length: $('#length').value, weight: $('#weight').value, notes: $('#notes').value.trim() });
+        $('#submitBtn').disabled = true;
+        $('#subErr').textContent = '';
+        $('#progress').hidden = false;
+        $('#progress').textContent = '\u0d8b\u0da9\u0dd4\u0d9c\u0dad \u0d9a\u0dbb\u0db8\u0dd2\u0db1\u0dca\u2026 (signal \u0d85\u0da9\u0dd4 \u0db1\u0db8\u0dca \u0dad\u0dad\u0dca\u0db4\u0dbb \u0d9a\u0dd2\u0dc4\u0dd2\u0db4\u0dba\u0d9a\u0dca \u0d9c\u0dad\u0dc0\u0dda)';
+        call('submitRecord', [payload], 45000).then(function (r) {
+            $('#submitBtn').disabled = false;
+            $('#progress').hidden = true;
+            $('#doneId').textContent = r.id;
+            $('#doneTime').textContent = r.time;
+            $('#workView').hidden = true;
+            $('#doneView').hidden = false;
+            stopGps();
+            window.scrollTo(0, 0);
+        }).catch(function (e) {
+            $('#submitBtn').disabled = false;
+            $('#progress').hidden = true;
+            alertErr('\u0dba\u0ddc\u0db8\u0dd4 \u0d9a\u0dd2\u0dbb\u0dd3\u0db8 \u0d85\u0dc3\u0dcf\u0dbb\u0dca\u0dae\u0d9a\u0dba\u0dd2: ' + e.message + ' \u2013 \u0daf\u0dad\u0dca\u0dad \u0db8\u0d9a\u0dcf \u0db1\u0dd0\u0dad, \u0db1\u0dd0\u0dc0\u0dad Submit \u0d9a\u0dbb\u0db1\u0dca\u0db1.');
+        });
+    });
+    $('#newBtn').addEventListener('click', function () {
+        CLIENT_ID = newId();
+        ['faultRef', 'pairs', 'length', 'weight', 'notes', 'mLat', 'mLng'].forEach(function (id) { return $('#' + id).value = ''; });
+        $('#cableType').value = '';
+        Object.keys(PHOTOS).forEach(function (k) { delete PHOTOS[k]; delete PHOTO_GPS[k]; });
+        document.querySelectorAll('.shot').forEach(function (el, i) {
+            el.classList.remove('done');
+            el.querySelector('.thumb').textContent = i + 1;
+            el.querySelector('.pick').textContent = '\ud83d\udcf7 \u0da1\u0dcf\u0dba\u0dcf\u0dbb\u0dd6\u0db4\u0dba \u0d9c\u0db1\u0dca\u0db1';
+        });
+        enterWork();
+    });
+    function alertErr(m) { $('#subErr').textContent = m; }
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); }
+})();
+</script>
+</body>
+</html>
